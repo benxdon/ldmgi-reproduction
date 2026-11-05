@@ -30,3 +30,21 @@ def spectral_embedding(L, c):
     '''return G*: (n,c) array, the eigenvectors of 2nd to c+1 smallest eigenvalues'''
     values, vectors = np.linalg.eigh(L)
     return vectors[:, 1:c+1]
+
+def spectral_rotation(G, n_iter=100, seed=0):
+    '''G: (n, c) eigenvectors. Return labels (n,) array of cluster ids 0..c-1'''
+    c = G.shape[1]
+    Z = G / np.linalg.norm(G, axis=1, keepdims=True)
+    rng = np.random.default_rng(seed)
+    R, _ = np.linalg.qr(rng.standard_normal((c, c)))
+
+    labels = np.argmax(Z @ R, axis=1)
+    for _ in range(n_iter):
+        Y = np.eye(c)[labels]
+        U, _, Vt = np.linalg.svd(Z.T @ Y)
+        R = U @ Vt
+        new_labels = np.argmax(Z @ R, axis=1)
+        if np.array_equal(new_labels, labels):
+            break
+        labels = new_labels
+    return labels
