@@ -48,3 +48,9 @@ def spectral_rotation(G, n_iter=100, seed=0):
             break
         labels = new_labels
     return labels
+
+def ldmgi(X, c, k=5, lamb=1.0, seed=0):
+    cliques = find_cliques(X, k)
+    L = build_L(X, cliques, lamb)
+    G = spectral_embedding(L, c)
+    return spectral_rotation(G, seed=seed)

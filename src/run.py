@@ -3,19 +3,19 @@ from sklearn.datasets import load_digits
 from sklearn.cluster import KMeans
 from sklearn.metrics import normalized_mutual_info_score as nmi
 
-from ldmgi import find_cliques, local_laplacian, build_L, spectral_embedding
+from ldmgi import ldmgi
 
 X, y = load_digits(return_X_y=True)
-print(X.shape, y.shape)
-
 X = X / np.linalg.norm(X, axis=1, keepdims=True)
 
-F = find_cliques(X, k=5)
-print(F.shape)
+labels_ldmgi = ldmgi(X, c=10)
+print(labels_ldmgi.shape)
+print(np.bincount(labels_ldmgi))
+print(nmi(y, labels_ldmgi))
 
-Xi = X[F[0]]
-Li = local_laplacian(Xi, 1)
-print(Li.shape)
+labels_kMeans = KMeans(10, n_init=10, random_state=0).fit_predict(X)
+print(labels_kMeans.shape)
+print(np.bincount(labels_kMeans))
+print(nmi(y, labels_kMeans))
 
-L = build_L(X, F, 1)
-print(L.shape)
+print(np.bincount(y))
