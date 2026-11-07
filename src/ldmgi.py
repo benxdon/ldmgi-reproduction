@@ -54,3 +54,5 @@ def ldmgi(X, c, k=5, lamb=1.0, seed=0):
     L = build_L(X, cliques, lamb)
     G = spectral_embedding(L, c)
     return spectral_rotation(G, seed=seed)
+
+
