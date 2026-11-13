@@ -15,10 +15,22 @@ def load_usps():
     X, y = fetch_openml("usps", version=2, as_frame=False, return_X_y=True, data_home="data", parser="liac-arff")
     return normalize(X),y.astype(int)-1
 
-def load_mnist():
+def load_mnist_t():
     X, y = fetch_openml("mnist_784", as_frame=False, return_X_y=True, data_home="data", parser="liac-arff")
     X, y = X[60000:65000], y[60000:65000]
     return normalize(X), y.astype(int)
+
+def load_mnist_s(seed=0):
+    '''for each class we randomly sample one handwritten digit image per ten images'''
+    X, y = fetch_openml("mnist_784", as_frame=False, return_X_y=True, data_home="data", parser="liac-arff")
+    y = y.astype(int)
+    rng = np.random.default_rng(seed)
+    idx = []
+    for digit in range(10):
+        members = np.where(y==digit)[0]
+        idx.extend(rng.choice(members, size=len(members) // 10, replace=False))
+    idx = np.sort(idx)
+    return normalize(X[idx]), y[idx]
 
 def load_coil20(path="data/coil-20-proc"):
     X, y = [], []
@@ -48,7 +60,8 @@ def load_jaffe(path="data/jaffe"):
 DATASETS = {
     'coil-20': load_coil20,
     'usps': load_usps,
-    'mnist': load_mnist,
+    'mnist-t': load_mnist_t,
+    'mnist-s': load_mnist_s,
     'jaffe': load_jaffe,
     'digits': load_digits_data,
 }

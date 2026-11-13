@@ -1,35 +1,29 @@
 import numpy as np
-from sklearn.datasets import load_digits
 from sklearn.cluster import KMeans
 from sklearn.metrics import normalized_mutual_info_score as nmi
-from scipy.optimize import linear_sum_assignment
 
-from ldmgi import ldmgi
+from ldmgi import ldmgi_sweep
+from metrics import acc
+from data import DATASETS
 
-# metrics
-def acc(y_true, y_pred):
-    '''A metric to analyze the accuracy of the cluster assignments by optimal mapping'''
-    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred) # flatten to 1d
-    c = max(y_true.max(), y_pred.max()) + 1 # get the max number of classes/clusters
-    M = np.zeros((c,c)) # init an empty matrix
-    for p, t in zip(y_pred, y_true):
-        M[p,t] += 1 # build a table, for each image add 1 at (pred, true)
-    rows, cols = linear_sum_assignment(-M) # find the optimal matching
-    return M[rows, cols].sum() / len(y_true) # find the accuracy
+LAMBDA = [1e-10, 0.01, 0.1, 1, np.inf]
+SEEDS = range(20)
 
-# data init
-X, y = load_digits(return_X_y=True)
-X = X / np.linalg.norm(X, axis=1, keepdims=True)
+if __name__ == "__main__":
+    test_data = ['coil-20', 'digits', 'mnist-s', 'mnist-t']
+    for data in test_data:
+        X, y = DATASETS[data]()
+        c = len(np.unique(y))
+        best_acc, best_lambda = float('-inf'), LAMBDA[0]
+        print(f"data set {data}")
 
-# prediction
-labels_ldmgi = ldmgi(X, c=10)
-print(np.bincount(labels_ldmgi))
-print(nmi(y, labels_ldmgi, average_method="geometric"))
-print(acc(y, labels_ldmgi))
+        all_ldmgi = ldmgi_sweep(X, c, LAMBDA, SEEDS)
+        for a, lamb in enumerate(LAMBDA):
+            ldmgi_accs = [acc(y, lab) for lab in all_ldmgi[a]]
+            ldmgi_nmis = [nmi(y, lab, average_method="geometric") for lab in all_ldmgi[a]]
+            print(f"{" " * 5}lambda: {lamb}, accuracy: {np.mean(ldmgi_accs):.3f} ± {np.std(ldmgi_accs):.3f}, nmi: {np.mean(ldmgi_nmis):.3f} ± {np.std(ldmgi_nmis):.3f}")
 
-labels_kMeans = KMeans(10, n_init=10, random_state=0).fit_predict(X)
-print(np.bincount(labels_kMeans))
-print(nmi(y, labels_kMeans, average_method="geometric"))
-print(acc(y, labels_kMeans))
-
-print(np.bincount(y))
+        all_km = [KMeans(c, n_init=1, random_state=s).fit_predict(X) for s in SEEDS]
+        km_accs = [acc(y, lab) for lab in all_km]
+        km_nmis = [nmi(y, lab, average_method="geometric") for lab in all_km]
+        print(f"{" " * 5}KMeans - accuracy: {np.mean(km_accs):.3f} ± {np.std(km_accs):.3f}, nmi: {np.mean(km_nmis):.3f} ± {np.std(km_nmis):.3f}")
