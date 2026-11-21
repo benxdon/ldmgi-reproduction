@@ -1,5 +1,5 @@
-'''Print comparison tables (ours vs the paper) from result/results.npy.'''
 import numpy as np
+from scipy.stats import ttest_ind
 
 # Paper numbers (Yang et al., 2010), LDMGI and K-means columns.
 # best = Tables II / III, mean ± std = Tables IV / V
@@ -58,3 +58,21 @@ if __name__ == "__main__":
                   f"{pm(o['inf']):>12s} | {pm(p[f'km_{metric}_mean']):>12s} {pm(o['km_mean']):>12s}")
 
     print("\n* USPS with pixels shifted from [-1, 1] to [0, 1] (our extra experiment, compared to the same paper row)")
+
+    # Welch's t-test (unequal variances) on the 20 per-seed ACCs, as in the paper's significance level 0.05.
+    # LDMGI is taken at the λ with the best mean, so these p-values are optimistic for LDMGI.
+    print("\nt-tests on ACC (Welch, 20 runs each; LDMGI at its best-mean λ)")
+    print(f"{'':8s} | {'LDMGI vs K-means':>26s} | {'LDMGI vs λ=∞':>26s}")
+    print("-" * 68)
+    for d in datasets:
+        acc_all = results[d]["ldmgi_acc"]
+        best = acc_all[:-1][acc_all[:-1].mean(axis=1).argmax()]
+        for other, label in [(results[d]["km_acc"], "km"), (acc_all[-1], "inf")]:
+            t, p = ttest_ind(best, other, equal_var=False)
+            cell = f"t = {t:6.2f}, p = {p:.1e} {'*' if p < 0.05 else ' '}"
+            if label == "km":
+                row = f"{NAMES[d]:8s} | {cell:>26s} |"
+            else:
+                row += f" {cell:>26s}"
+        print(row)
+    print("* = significant at 0.05")
