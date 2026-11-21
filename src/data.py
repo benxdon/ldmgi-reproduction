@@ -13,6 +13,7 @@ def load_digits_data():
 
 def load_usps():
     X, y = fetch_openml("usps", version=2, as_frame=False, return_X_y=True, data_home="data", parser="liac-arff")
+    X = (X + 1) / 2 # OpenML stores pixels in [-1, 1]; shift to [0, 1] so the background is 0
     return normalize(X),y.astype(int)-1
 
 def load_mnist_t():

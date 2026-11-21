@@ -51,13 +51,16 @@ def spectral_rotation(G: np.ndarray, n_iter:int=100, seed:int=0):
         if np.array_equal(new_labels, labels):
             break
         labels = new_labels
-    return labels
+    Y = np.eye(c)[labels]
+    obj = np.linalg.norm(Y - Z @ R) ** 2
+    return labels, obj
 
 def ldmgi(X: np.ndarray, c: int, k:int=5, lamb:float=1.0, seed:int=0) -> np.ndarray:
     cliques = find_cliques(X, k)
     L = build_L(X, cliques, lamb)
     G = spectral_embedding(L, c)
-    return spectral_rotation(G, seed=seed)
+    labels, _ = spectral_rotation(G, seed=seed)
+    return labels
 
 def global_laplacian(X: np.ndarray, lamb: float):
     '''LDMGI with k = n: every clique is the whole data set, so L = n * H (Xc Xc^T + lamb I)^-1 H.
@@ -71,10 +74,11 @@ def ldmgi_sweep(X: np.ndarray, c: int, lambdas: list, seeds: list, k:int = 5) ->
     '''run ldmgi for every combinations of lambda and seed. return labels of shape (len(lambda), len(seeds), n)'''
     cliques = find_cliques(X, k)
     out = np.zeros((len(lambdas), len(seeds), len(X)), dtype=int)
+    objs = np.zeros((len(lambdas), len(seeds)))
     for a, lamb in enumerate(lambdas):
         L = build_L(X, cliques, lamb)
         G = spectral_embedding(L, c)
         for b, seed in enumerate(seeds):
-            out[a,b] = spectral_rotation(G, seed) # this make it cheaper to run
-    return out
+            out[a,b], objs[a,b] = spectral_rotation(G, seed) # this make it cheaper to run
+    return out, objs
 
