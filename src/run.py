@@ -10,7 +10,7 @@ LAMBDA = list(np.logspace(-8, 8, 9)) + [np.inf]
 SEEDS = range(20)
 
 if __name__ == "__main__":
-    test_data = ['coil-20', 'usps', 'mnist-s', 'mnist-t', 'jaffe']
+    test_data = ['coil-20', 'usps', 'usps-shift', 'mnist-s', 'mnist-t', 'jaffe']
     results = dict()
 
     for data in test_data:

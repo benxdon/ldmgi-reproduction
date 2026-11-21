@@ -11,9 +11,12 @@ def load_digits_data():
     X, y = load_digits(return_X_y=True)
     return normalize(X),y
 
-def load_usps():
+def load_usps(shift=False):
+    '''OpenML stores pixels in [-1, 1] (background = -1), which matches the paper's results.
+    shift=True moves them to [0, 1] (background = 0); used as an extra experiment.'''
     X, y = fetch_openml("usps", version=2, as_frame=False, return_X_y=True, data_home="data", parser="liac-arff")
-    X = (X + 1) / 2 # OpenML stores pixels in [-1, 1]; shift to [0, 1] so the background is 0
+    if shift:
+        X = (X + 1) / 2
     return normalize(X),y.astype(int)-1
 
 def load_mnist_t():
@@ -61,6 +64,7 @@ def load_jaffe(path="data/jaffe"):
 DATASETS = {
     'coil-20': load_coil20,
     'usps': load_usps,
+    'usps-shift': lambda: load_usps(shift=True),
     'mnist-t': load_mnist_t,
     'mnist-s': load_mnist_s,
     'jaffe': load_jaffe,
