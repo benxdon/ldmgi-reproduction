@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from sklearn.cluster import KMeans
 from sklearn.metrics import normalized_mutual_info_score as nmi
 
@@ -48,5 +49,5 @@ if __name__ == "__main__":
             "km_best_acc": km_accs[km_best], "km_best_nmi": km_nmis[km_best],
         }
         print(f"Done {data}")
-
+    os.makedirs("result", exist_ok=True)
     np.save("result/results.npy", results, allow_pickle=True)
